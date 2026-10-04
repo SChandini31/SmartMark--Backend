@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey
 )
 from sqlalchemy.sql import func
+from pgvector.sqlalchemy import Vector
 
 from app.db.database import Base
 
@@ -14,7 +15,11 @@ from app.db.database import Base
 class Resource(Base):
     __tablename__ = "resources"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
     user_id = Column(
         Integer,
@@ -23,24 +28,47 @@ class Resource(Base):
         index=True
     )
 
+    embedding = Column(
+        Vector(384),
+        nullable=True
+    )
+
     collection_id = Column(
-    Integer,
-    ForeignKey("collections.id", ondelete="SET NULL"),
-    nullable=True,
-    index=True
-   )
-   
-    url = Column(Text, nullable=False)
+        Integer,
+        ForeignKey("collections.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
 
-    title = Column(String(500), nullable=True)
+    url = Column(
+        Text,
+        nullable=False
+    )
 
-    description = Column(Text, nullable=True)
+    title = Column(
+        String(500),
+        nullable=True
+    )
 
-    resource_type = Column(String(50), nullable=True)
+    description = Column(
+        Text,
+        nullable=True
+    )
 
-    source_domain = Column(String(255), nullable=True)
+    resource_type = Column(
+        String(50),
+        nullable=True
+    )
 
-    preview_image = Column(Text, nullable=True)
+    source_domain = Column(
+        String(255),
+        nullable=True
+    )
+
+    preview_image = Column(
+        Text,
+        nullable=True
+    )
 
     created_at = Column(
         DateTime(timezone=True),
@@ -53,4 +81,9 @@ class Resource(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False
+    )
+
+    last_accessed_at = Column(
+    DateTime(timezone=True),
+    nullable=True
     )

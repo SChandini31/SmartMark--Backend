@@ -6,12 +6,44 @@ from app.routes.auth import router as auth_router
 from app.routes.collections import router as collections_router
 from app.routes.tags import router as tags_router
 from app.routes.search import router as search_router
+from app.routes.semantic_search import router as semantic_search_router
+from app.routes.related_resources import router as related_resources_router
+from app.routes.rediscovery import router as rediscovery_router
 
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from app.services.rediscovery_scheduler import run_rediscovery_job
+
+scheduler = BackgroundScheduler()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.add_job(
+        run_rediscovery_job,
+        "interval",
+        days=1,
+        id="rediscovery_email_job",
+        replace_existing=True
+    )
+
+    scheduler.start()
+
+    print("Rediscovery scheduler started.")
+
+    yield
+
+    scheduler.shutdown()
+
+    print("Rediscovery scheduler stopped.")
+    
 
 app = FastAPI(
     title="SmartMark API",
     description="Personal Information Retrieval and Knowledge Management System",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.include_router(auth_router)
@@ -19,6 +51,9 @@ app.include_router(resources_router)
 app.include_router(collections_router)
 app.include_router(tags_router)
 app.include_router(search_router)
+app.include_router(semantic_search_router)
+app.include_router(related_resources_router)
+app.include_router(rediscovery_router)
 
 @app.get("/")
 def root():

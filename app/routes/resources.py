@@ -8,6 +8,7 @@ from app.models.resource import Resource
 from app.models.collection import Collection
 from app.models.tag import Tag
 from app.models.resource_tag import ResourceTag
+from datetime import datetime, timezone
 
 from app.schemas.resource import (
     ResourceCreate,
@@ -15,8 +16,9 @@ from app.schemas.resource import (
     ResourceResponse,
     ResourceCreateResponse,
 )
-from app.schemas.tag import TagResponse, TagSuggestionResponse
 
+from app.schemas.tag import TagResponse, TagSuggestionResponse
+from app.services.embedding_service import generate_embedding
 from app.core.dependencies import get_current_user
 from app.services.metadata_service import extract_metadata
 from app.services.tagging_service import (
@@ -63,6 +65,18 @@ async def create_resource(
         str(resource_data.url)
     )
 
+    embedding_text = " ".join(
+    filter(
+          None,
+          [
+            resource_data.title or metadata["title"],
+            resource_data.description or metadata["description"],
+            metadata["source_domain"]
+          ]
+        )
+    )
+    embedding = generate_embedding(embedding_text)
+
     # Create resource
     resource = Resource(
         user_id=current_user.id,
@@ -79,6 +93,7 @@ async def create_resource(
         resource_type=resource_data.resource_type,
         source_domain=metadata["source_domain"],
         preview_image=metadata["preview_image"],
+        embedding=embedding
     )
 
     db.add(resource)
@@ -160,7 +175,10 @@ def get_resource(
             status_code=404,
             detail="Resource not found",
         )
+    resource.last_accessed_at = datetime.now(timezone.utc)
 
+    db.commit()
+    db.refresh(resource)
     return resource
 
 

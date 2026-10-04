@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-
+from pydantic import BaseModel, Field
 
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
@@ -17,7 +17,10 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8)
+    
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1)
