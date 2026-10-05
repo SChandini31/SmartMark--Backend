@@ -1,12 +1,20 @@
 from sentence_transformers import SentenceTransformer
 
 
-# Load the embedding model once when the application starts.
-# all-MiniLM-L6-v2 produces 384-dimensional embeddings.
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2",
-    backend="onnx"
-)
+# Model is loaded only when an embedding is actually needed.
+model = None
+
+
+def get_model():
+    global model
+
+    if model is None:
+        model = SentenceTransformer(
+            "all-MiniLM-L6-v2",
+            backend="onnx"
+        )
+
+    return model
 
 
 def generate_embedding(text: str) -> list[float]:
@@ -17,7 +25,9 @@ def generate_embedding(text: str) -> list[float]:
     if not text or not text.strip():
         raise ValueError("Text cannot be empty")
 
-    embedding = model.encode(
+    embedding_model = get_model()
+
+    embedding = embedding_model.encode(
         text,
         convert_to_numpy=True
     )
