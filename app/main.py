@@ -9,6 +9,7 @@ from app.routes.search import router as search_router
 from app.routes.semantic_search import router as semantic_search_router
 from app.routes.related_resources import router as related_resources_router
 from app.routes.rediscovery import router as rediscovery_router
+from app.routes.notes import router as notes_router
 
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -54,6 +55,7 @@ app.include_router(search_router)
 app.include_router(semantic_search_router)
 app.include_router(related_resources_router)
 app.include_router(rediscovery_router)
+app.include_router(notes_router)
 
 @app.get("/")
 def root():

@@ -150,6 +150,49 @@ def get_resources(
 
     return resources
 
+# ============================================================
+# GET FAVORITE RESOURCES
+# ============================================================
+
+@router.get("/favorites")
+def get_favorites(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    favorites = (
+        db.query(Resource)
+        .filter(
+            Resource.user_id == current_user.id,
+            Resource.is_favorite == True
+        )
+        .order_by(Resource.created_at.desc())
+        .all()
+    )
+
+    return favorites
+
+# ============================================================
+# GET RECENT RESOURCES
+# ============================================================
+
+@router.get("/recent")
+def get_recent_resources(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    recent_resources = (
+        db.query(Resource)
+        .filter(
+            Resource.user_id == current_user.id,
+            Resource.last_accessed_at.is_not(None)
+        )
+        .order_by(Resource.last_accessed_at.desc())
+        .limit(20)
+        .all()
+    )
+
+    return recent_resources
+
 
 # ============================================================
 # GET ONE RESOURCE
@@ -546,3 +589,36 @@ def suggest_resource_tags(
         "keywords": keywords,
         "suggested_tags": suggested_tags,
     }
+
+@router.patch("/{resource_id}/favorite")
+def toggle_favorite(
+    resource_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resource = (
+        db.query(Resource)
+        .filter(
+            Resource.id == resource_id,
+            Resource.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if resource is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Resource not found"
+        )
+
+    resource.is_favorite = not resource.is_favorite
+
+    db.commit()
+    db.refresh(resource)
+
+    return {
+        "message": "Favorite status updated",
+        "resource_id": resource.id,
+        "is_favorite": resource.is_favorite
+    }
+

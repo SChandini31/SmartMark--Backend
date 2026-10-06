@@ -4,7 +4,8 @@ from sqlalchemy import (
     String,
     DateTime,
     Text,
-    ForeignKey
+    ForeignKey, 
+    Boolean
 )
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
@@ -86,4 +87,11 @@ class Resource(Base):
     last_accessed_at = Column(
     DateTime(timezone=True),
     nullable=True
+    )
+
+    is_favorite = Column(
+    Boolean,
+    nullable=False,
+    default=False,
+    server_default="false"
     )
