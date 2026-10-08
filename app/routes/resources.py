@@ -9,6 +9,8 @@ from app.models.collection import Collection
 from app.models.tag import Tag
 from app.models.resource_tag import ResourceTag
 from datetime import datetime, timezone
+from app.services.collection_suggestion_service import suggest_collections
+from app.schemas.collection import CollectionSuggestion
 
 from app.schemas.resource import (
     ResourceCreate,
@@ -43,6 +45,23 @@ async def create_resource(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+
+    # Check for duplicate resource
+    existing_resource = (
+        db.query(Resource)
+        .filter(
+            Resource.user_id == current_user.id,
+            Resource.url == str(resource_data.url),
+        )
+        .first()
+    )
+
+    if existing_resource is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Resource already exists"
+        )
+
     # Validate collection ownership if collection is provided
     if resource_data.collection_id is not None:
         collection = (
@@ -192,6 +211,39 @@ def get_recent_resources(
     )
 
     return recent_resources
+
+#============================================================
+# SUGGEST COLLECTIONS FOR RESOURCE
+#============================================================    
+@router.get(
+    "/{resource_id}/collection-suggestions",
+    response_model=list[CollectionSuggestion]
+)
+def get_collection_suggestions(
+    resource_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resource = (
+        db.query(Resource)
+        .filter(
+            Resource.id == resource_id,
+            Resource.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if resource is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Resource not found"
+        )
+
+    return suggest_collections(
+        resource=resource,
+        user_id=current_user.id,
+        db=db
+    )
 
 
 # ============================================================

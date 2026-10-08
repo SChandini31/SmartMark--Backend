@@ -20,3 +20,9 @@ class CollectionResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CollectionSuggestion(BaseModel):
+    collection_id: int
+    collection_name: str
+    score: float
+    matched_keywords: list[str]

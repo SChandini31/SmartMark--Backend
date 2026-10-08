@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -29,4 +29,11 @@ class User(Base):
     last_rediscovery_email_at = Column(
         DateTime(timezone=True),
         nullable=True
+    )
+
+    rediscovery_emails_enabled = Column(
+    Boolean,
+    nullable=False,
+    default=True,
+    server_default="true"
     )
