@@ -26,3 +26,13 @@ class CollectionSuggestion(BaseModel):
     collection_name: str
     score: float
     matched_keywords: list[str]
+
+class CollectionResponse(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    description: Optional[str]
+    resource_count: int = 0
+
+    class Config:
+        from_attributes = True

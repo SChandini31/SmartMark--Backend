@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.db.database import get_db
 from app.models.user import User
@@ -46,13 +47,32 @@ def get_collections(
     current_user: User = Depends(get_current_user)
 ):
     collections = (
-        db.query(Collection)
-        .filter(Collection.user_id == current_user.id)
+        db.query(
+            Collection,
+            func.count(Resource.id).label("resource_count")
+        )
+        .outerjoin(
+            Resource,
+            Resource.collection_id == Collection.id
+        )
+        .filter(
+            Collection.user_id == current_user.id
+        )
+        .group_by(Collection.id)
         .order_by(Collection.created_at.desc())
         .all()
     )
 
-    return collections
+    return [
+        {
+            "id": collection.id,
+            "user_id": collection.user_id,
+            "name": collection.name,
+            "description": collection.description,
+            "resource_count": resource_count
+        }
+        for collection, resource_count in collections
+    ]
 
 
 # GET ONE COLLECTION
