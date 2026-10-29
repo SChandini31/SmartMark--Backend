@@ -5,7 +5,8 @@ from sqlalchemy import (
     DateTime,
     Text,
     ForeignKey, 
-    Boolean
+    Boolean,
+    UniqueConstraint
 )
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
@@ -15,6 +16,14 @@ from app.db.database import Base
 
 class Resource(Base):
     __tablename__ = "resources"
+    
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "file_hash",
+            name="uq_resources_user_file_hash",
+        ),
+    )
 
     id = Column(
         Integer,
@@ -43,7 +52,7 @@ class Resource(Base):
 
     url = Column(
         Text,
-        nullable=False
+        nullable=True
     )
 
     title = Column(
@@ -69,6 +78,41 @@ class Resource(Base):
     preview_image = Column(
         Text,
         nullable=True
+    )
+
+    # Uploaded document metadata
+    original_filename = Column(
+        String(255),
+        nullable=True
+    )
+
+    file_path = Column(
+        Text,
+        nullable=True
+    )
+
+    mime_type = Column(
+        String(100),
+        nullable=True
+    )
+
+    file_hash = Column(
+        String(64),
+        nullable=True,
+        index=True,
+    )
+
+    # Extracted document content
+    extracted_text = Column(
+        Text,
+        nullable=True
+    )
+
+    extraction_status = Column(
+        String(30),
+        nullable=False,
+        default="pending",
+        server_default="pending"
     )
 
     created_at = Column(

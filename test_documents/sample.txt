@@ -1,0 +1,1 @@
+SmartMark stores research papers and programming tutorials. Semantic search finds relevant saved knowledge.

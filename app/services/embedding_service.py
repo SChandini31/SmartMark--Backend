@@ -11,7 +11,8 @@ def get_model():
     if model is None:
         model = SentenceTransformer(
             "all-MiniLM-L6-v2",
-            backend="onnx"
+            backend="onnx",
+            model_kwargs={"file_name": "onnx/model.onnx"},
         )
 
     return model

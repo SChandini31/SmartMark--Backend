@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import test_database_connection
 from app.routes.resources import router as resources_router
 from app.routes.auth import router as auth_router
@@ -11,6 +12,10 @@ from app.routes.related_resources import router as related_resources_router
 from app.routes.rediscovery import router as rediscovery_router
 from app.routes.notes import router as notes_router
 from app.routes.dashboard import router as dashboard_router
+from app.routes.document_uploads import router as document_uploads_router
+from app.routes.video_uploads import router as video_uploads_router
+from app.routes.image_uploads import router as image_uploads_router
+from app.routes import resource_files
 
 from app.routes.settings import router as settings_router
 from contextlib import asynccontextmanager
@@ -49,6 +54,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth_router)
 app.include_router(resources_router)
 app.include_router(collections_router)
@@ -60,6 +73,10 @@ app.include_router(rediscovery_router)
 app.include_router(notes_router)
 app.include_router(settings_router)
 app.include_router(dashboard_router)
+app.include_router(document_uploads_router)
+app.include_router(video_uploads_router)
+app.include_router(image_uploads_router)
+app.include_router(resource_files.router)
 
 @app.get("/")
 def root():

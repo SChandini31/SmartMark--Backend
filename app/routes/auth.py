@@ -2,24 +2,22 @@ import hashlib
 from datetime import datetime, timezone
 
 from app.models.password_reset_token import PasswordResetToken
-from app.schemas.auth import ResetPasswordRequest
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.services.email_service import send_email
 from app.services.password_reset_service import create_password_reset_token
-from app.services.email_service import send_email
+
 
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.auth import RegisterRequest, UserResponse
-from app.core.security import hash_password
 from app.core.dependencies import get_current_user
 from app.schemas.auth import (
     RegisterRequest,
     UserResponse,
     LoginRequest,
     TokenResponse,
+    ResetPasswordRequest,
 )
 
 from app.core.security import (

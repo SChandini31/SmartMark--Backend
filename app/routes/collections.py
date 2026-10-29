@@ -8,7 +8,8 @@ from app.models.collection import Collection
 from app.schemas.collection import (
     CollectionCreate,
     CollectionUpdate,
-    CollectionResponse
+    CollectionResponse,
+    BulkResourceAssignment,
 )
 from app.core.dependencies import get_current_user
 from app.models.resource import Resource
@@ -203,3 +204,74 @@ def get_collection_resources(
     )
 
     return resources
+
+
+# BULK ADD / MOVE RESOURCES TO A COLLECTION
+@router.post("/{collection_id}/resources/bulk")
+def bulk_assign_resources(
+    collection_id: int,
+    assignment_data: BulkResourceAssignment,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # 1. Verify that the collection belongs to the logged-in user.
+    collection = (
+        db.query(Collection)
+        .filter(
+            Collection.id == collection_id,
+            Collection.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if collection is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Collection not found",
+        )
+
+    # 2. Remove duplicate IDs while preserving their order.
+    resource_ids = list(dict.fromkeys(assignment_data.resource_ids))
+
+    # 3. Fetch only resources owned by the logged-in user.
+    resources = (
+        db.query(Resource)
+        .filter(
+            Resource.id.in_(resource_ids),
+            Resource.user_id == current_user.id,
+        )
+        .all()
+    )
+
+    # 4. Reject the entire request if any resource is missing
+    # or belongs to another user.
+    found_ids = {resource.id for resource in resources}
+    missing_ids = sorted(set(resource_ids) - found_ids)
+
+    if missing_ids:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "Some resources were not found or are inaccessible.",
+                "resource_ids": missing_ids,
+            },
+        )
+
+    # 5. Assign all selected resources to the collection.
+    try:
+        for resource in resources:
+            resource.collection_id = collection.id
+
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "message": "Resources added to collection successfully.",
+        "collection_id": collection.id,
+        "collection_name": collection.name,
+        "assigned_count": len(resources),
+        "resource_ids": resource_ids,
+    }
