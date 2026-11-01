@@ -19,6 +19,7 @@ from app.models.tag import Tag
 from app.models.resource_tag import ResourceTag
 from datetime import datetime, timezone
 from app.services.collection_suggestion_service import ( 
+    suggest_collections,
     suggest_collections_for_resources,
 )
 from app.schemas.collection import CollectionSuggestion
